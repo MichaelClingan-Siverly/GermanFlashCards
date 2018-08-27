@@ -26,7 +26,7 @@ function send_response($str, $client_line, $file) {
     $line_count_good = false;
     //stops adding pairs when a german word is found thats the same as the one given by client
     while(($line = next_line($file)) != null && (!$line_count_good || $client_line !== $line)){
-        $str .= '\n' . $line;
+        $str .= "\n" . $line;
         $line_count_good = !$line_count_good;
     }
     

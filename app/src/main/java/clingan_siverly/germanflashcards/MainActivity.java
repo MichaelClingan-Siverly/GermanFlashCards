@@ -14,7 +14,7 @@ import mike.logic.LogicI;
 import mike.networking.DownloadCallback;
 import mike.networking.NetworkFragment;
 
-public class MainActivity extends AppCompatActivity implements DownloadCallback<String>{
+public class MainActivity extends AppCompatActivity implements DownloadCallback{
     //I need to keep a reference to the network fragment which owns the AsyncTask that actually does the work
     private NetworkFragment mNetworkFragment;
     //tells if a downlaod is in progress, so I won't let user try again while still downloading
@@ -38,10 +38,20 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback<
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        String address = "http://germanwords.000webhostapp.com/wordPairs";
-//        String address = "http://www.germanwords.epizy.com/wordPairs.txt";
-        mNetworkFragment = NetworkFragment.getInstance(getFragmentManager(), address);
+
         setContentView(R.layout.activity_main);
+        getNewWords();
+    }
+
+    private void getNewWords(){
+        final String address = "http://germanwords.000webhostapp.com/wordPairs.php";
+
+        mNetworkFragment = new NetworkFragment();
+        Bundle args = new Bundle();
+        args.putString(NetworkFragment.BASE_ADDRESS, address);
+
+        mNetworkFragment.setArguments(args);
+        getFragmentManager().beginTransaction().add(mNetworkFragment, NetworkFragment.TAG).commit();
     }
 
     @Override
@@ -63,8 +73,10 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback<
     private void startDownload() {
         if (!mDownloading && mNetworkFragment != null) {
             // Execute the async download.
-            mNetworkFragment.startDownload();
-            mDownloading = true;
+            if(mNetworkFragment.startDownload())
+                mDownloading = true;
+            else
+                Toast.makeText(this, "something went wrong", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -85,24 +97,19 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback<
      * Indicates that the download operation has finished. This method is called even if the
      * download hasn't completed successfully.
      *
-     * @param result the String that was received from the network
      * @param success true if the result represents the actual string, false if its an error message
      */
     @Override
-    public void finishDownloading(String result, boolean success) {
+    public void finishDownloading(String resultMessage, boolean success) {
         mDownloading = false;
         if (mNetworkFragment != null) {
             mNetworkFragment.cancelDownload();
         }
-        if(!success)
-            result = null;
-        LogicI logic = new Logic();
-        int numDownloaded = logic.processDownloadedWords(this, result);
         String text;
-        if(numDownloaded > 0)
-            text = numDownloaded + " new words added to the library.";
+        if(success)
+            text = resultMessage + " new words added to the library.";
         else
-            text = "Download failed. :(";
+            text = resultMessage;
         Toast.makeText(this, text, Toast.LENGTH_LONG).show();
     }
 }

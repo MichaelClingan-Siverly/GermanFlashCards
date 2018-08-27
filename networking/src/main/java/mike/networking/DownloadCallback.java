@@ -4,9 +4,8 @@ import android.net.NetworkInfo;
 
 /**
  * Copied from https://developer.android.com/training/basics/network-ops/connecting
- * @param <T> type of the network operation result this is expected to handle
  */
-public interface DownloadCallback<T> {
+public interface DownloadCallback {
 
     /**
      * Get the device's active network status in the form of a NetworkInfo object.
@@ -17,5 +16,5 @@ public interface DownloadCallback<T> {
      * Indicates that the download operation has finished. This method is called even if the
      * download hasn't completed successfully.
      */
-    void finishDownloading(T result, boolean success);
+    void finishDownloading(String resultMessage, boolean success);
 }
