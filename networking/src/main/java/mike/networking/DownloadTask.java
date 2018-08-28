@@ -17,11 +17,13 @@ import mike.utils.WordPair;
 /**
  * Implementation of AsyncTask designed to fetch data from the network.
  */
-class DownloadTask extends AsyncTask<String, Void, DownloadTask.Result> {
+class DownloadTask extends AsyncTask<String, String, DownloadTask.Result> {
 
     private DownloadCallback mCallback;
+    private String fileDir;
 
-    DownloadTask(DownloadCallback callback) {
+    DownloadTask(String fileDirectory, DownloadCallback callback) {
+        fileDir = fileDirectory;
         mCallback = callback;
     }
 
@@ -67,16 +69,20 @@ class DownloadTask extends AsyncTask<String, Void, DownloadTask.Result> {
     protected Result doInBackground(String... urls) {
         Result result = null;
         if (!isCancelled() && urls != null && urls.length > 0) {
-            String urlString;
-            String lastWord = FileUtils.readLastWordFromFile();
-            if(lastWord != null)
-                urlString = urls[0] + "/?last_word=" + lastWord;
-            else
-                urlString = urls[0];
 
+            String urlString;
             try {
+                String lastWord = FileUtils.readLastWordFromFile(fileDir);
+                if(lastWord != null)
+                    urlString = urls[0] + "/?last_word=" + lastWord;
+                else
+                    urlString = urls[0];
+
+                //everything in here just throws the exceptions back to this to handle
                 URL url = new URL(urlString);
-                int wordsDownloaded = downloadUrl(url);
+                List<WordPair> newWords = downloadUrl(url);
+                int wordsDownloaded = saveWords(newWords);
+
                 if (wordsDownloaded >= 0) {
                     result = new Result(wordsDownloaded);
                 }
@@ -85,10 +91,17 @@ class DownloadTask extends AsyncTask<String, Void, DownloadTask.Result> {
                 }
             }
             catch(Exception e) {
+                e.printStackTrace();
                 result = new Result(e);
             }
         }
         return result;
+    }
+
+    //Things might take a bit longer than I'd like, so I'll at least let the user know what I know
+    @Override
+    protected void onProgressUpdate(String... messages) {
+        mCallback.postProgress(messages[0]);
     }
 
     /**
@@ -114,17 +127,33 @@ class DownloadTask extends AsyncTask<String, Void, DownloadTask.Result> {
     }
 
     /**
+     *
+     * @param pairs the newly downloaded English-German word pairs
+     * @return the number of words saved from pairs
+     * @throws IOException something went wrong with the connection or the stream reading from it
+     */
+    private int saveWords(List<WordPair> pairs) throws IOException {
+        int result = pairs.size();
+        if (result > 0) {
+            publishProgress("Saving downloaded words");
+            FileUtils.saveWordsToFile(fileDir, pairs);
+        }
+        return result;
+    }
+
+    /**
      * Given a URL, sets up a connection and gets the HTTP response body from the server.
      * If the network request is successful, it returns the response body in String form. Otherwise,
      * it will throw an IOException.
      * @param url the URL this will try connecting to
-     * @return the number of words read from url
+     * @return list containing all the downloaded word pairs
      * @throws IOException something went wrong with the connection or the stream reading from it
      */
-    private int downloadUrl(URL url) throws IOException {
-        InputStream stream = null;
+    private List<WordPair> downloadUrl(URL url) throws IOException {
+        publishProgress("Checking for new words");
         HttpURLConnection connection = null;
-        int result = -1;
+        InputStream stream = null;
+
         try {
             connection = makeConnection(url);
             int responseCode = connection.getResponseCode();
@@ -133,23 +162,16 @@ class DownloadTask extends AsyncTask<String, Void, DownloadTask.Result> {
             }
             // Retrieve the response body as an InputStream to be processed for word pairs.
             stream = connection.getInputStream();
-            if (stream != null) {
-                List<WordPair> newPairs = StreamUtils.readStream(stream);
-                result = newPairs.size();
-                if(result > 0)
-                    FileUtils.saveWordsToFile(newPairs);
-            }
+            return StreamUtils.readStream(stream);
         }
         finally {
-            // Close Stream and disconnect HTTPS connection.
-            if (stream != null) {
-                stream.close();
-            }
+            // have to disconnect HTTPS connection.
             if (connection != null) {
                 connection.disconnect();
             }
+            if(stream != null)
+                stream.close();
         }
-        return result;
     }
 
     private HttpURLConnection makeConnection(URL url) throws IOException {

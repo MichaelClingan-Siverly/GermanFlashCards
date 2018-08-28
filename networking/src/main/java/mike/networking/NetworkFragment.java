@@ -59,7 +59,8 @@ public class NetworkFragment extends Fragment {
         if(baseAddress == null)
             return false;
         else if(mDownloadTask == null) {
-            mDownloadTask = new DownloadTask(mCallback);
+            String parentDirPath = getActivity().getFilesDir().getAbsolutePath();
+            mDownloadTask = new DownloadTask(parentDirPath, mCallback);
             mDownloadTask.execute(baseAddress);
         }
         return true;

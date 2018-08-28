@@ -13,6 +13,12 @@ public interface DownloadCallback {
     NetworkInfo getActiveNetworkInfo();
 
     /**
+     * display a message indicating what is going on with the download
+     * @param message the message to be displayed to the user
+     */
+    void postProgress(String message);
+
+    /**
      * Indicates that the download operation has finished. This method is called even if the
      * download hasn't completed successfully.
      */

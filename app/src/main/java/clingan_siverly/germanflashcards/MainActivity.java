@@ -93,6 +93,11 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback{
             return null;
     }
 
+    @Override
+    public void postProgress(String message){
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
     /**
      * Indicates that the download operation has finished. This method is called even if the
      * download hasn't completed successfully.
