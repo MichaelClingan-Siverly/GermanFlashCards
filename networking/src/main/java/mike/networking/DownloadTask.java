@@ -81,6 +81,8 @@ class DownloadTask extends AsyncTask<String, String, DownloadTask.Result> {
                 //everything in here just throws the exceptions back to this to handle
                 URL url = new URL(urlString);
                 List<WordPair> newWords = downloadUrl(url);
+                if(isCancelled())
+                    return null;
                 int wordsDownloaded = saveWords(newWords);
 
                 if (wordsDownloaded >= 0) {
@@ -133,8 +135,9 @@ class DownloadTask extends AsyncTask<String, String, DownloadTask.Result> {
      * @throws IOException something went wrong with the connection or the stream reading from it
      */
     private int saveWords(List<WordPair> pairs) throws IOException {
-        int result = pairs.size();
-        if (result > 0) {
+        int result = 0;
+        if (pairs.size() > 0) {
+            result = pairs.size();
             publishProgress("Saving downloaded words");
             FileUtils.saveWordsToFile(fileDir, pairs);
         }
@@ -160,9 +163,13 @@ class DownloadTask extends AsyncTask<String, String, DownloadTask.Result> {
             if (responseCode != HttpURLConnection.HTTP_OK) {
                 throw new IOException("HTTP error code: " + responseCode);
             }
-            // Retrieve the response body as an InputStream to be processed for word pairs.
-            stream = connection.getInputStream();
-            return StreamUtils.readStream(stream);
+            if(!isCancelled()) {
+                // Retrieve the response body as an InputStream to be processed for word pairs.
+                stream = connection.getInputStream();
+                return StreamUtils.readStream(stream);
+            }
+            else
+                return null;
         }
         finally {
             // have to disconnect HTTPS connection.

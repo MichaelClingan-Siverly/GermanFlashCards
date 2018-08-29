@@ -2,6 +2,7 @@ package clingan_siverly.germanflashcards;
 
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -20,10 +21,10 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback{
     //tells if a downlaod is in progress, so I won't let user try again while still downloading
     private boolean mDownloading = false;
 
-
+    //TODO remove the download button from the layout
     //The two methods here are used as listeners for the two buttons for activity_main layout
     public void downloadCards(View v){
-        startDownload();
+//        startDownload();
     }
 
     public void goToFlashCards(View v){
@@ -38,9 +39,16 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        if(savedInstanceState == null || !savedInstanceState.getBoolean("downloaded", false))
+            getNewWords();
         setContentView(R.layout.activity_main);
-        getNewWords();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState){
+        outState.putBoolean("downloaded", true);
+
+        super.onSaveInstanceState(outState);
     }
 
     private void getNewWords(){
@@ -49,34 +57,27 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback{
         mNetworkFragment = new NetworkFragment();
         Bundle args = new Bundle();
         args.putString(NetworkFragment.BASE_ADDRESS, address);
-
         mNetworkFragment.setArguments(args);
-        getFragmentManager().beginTransaction().add(mNetworkFragment, NetworkFragment.TAG).commit();
+
+        if (mNetworkFragment != null) {
+            // Execute the async download.
+            mDownloading = true;
+        }
+        //I need this to be commitNow. Starting download before commit is finished will cause crashes
+        getSupportFragmentManager().beginTransaction()
+                .add(mNetworkFragment, NetworkFragment.TAG).commitNow();
     }
 
     @Override
     public void onBackPressed(){
         FragmentManager fragmentManager = getSupportFragmentManager();
+        Fragment frag = fragmentManager.findFragmentByTag("cardFrag");
 
-        if(fragmentManager.findFragmentByTag("cardFrag") != null){
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.remove(fragmentManager.findFragmentByTag("cardFrag"));
-            fragmentTransaction.commit();
+        if(frag != null) {
+            fragmentManager.beginTransaction().remove(frag).commitNow();
         }
-        else
+        else {
             super.onBackPressed();
-    }
-
-
-
-
-    private void startDownload() {
-        if (!mDownloading && mNetworkFragment != null) {
-            // Execute the async download.
-            if(mNetworkFragment.startDownload())
-                mDownloading = true;
-            else
-                Toast.makeText(this, "something went wrong", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -109,6 +110,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback{
         mDownloading = false;
         if (mNetworkFragment != null) {
             mNetworkFragment.cancelDownload();
+            getSupportFragmentManager().beginTransaction().remove(mNetworkFragment).commitNow();
+            mNetworkFragment = null;
         }
         String text;
         if(success)

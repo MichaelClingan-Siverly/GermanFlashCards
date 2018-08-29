@@ -1,9 +1,11 @@
 package mike.networking;
 
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 
 /**
  * Implementation of headless Fragment that runs an AsyncTask to fetch data from the network.
@@ -25,7 +27,12 @@ public class NetworkFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //TODO I'm sure I'll come back to do something here once I begin dealing with Android lifecycles
+        /* This alone is enough for surviving configuration changes.
+         * If the Activity that created this needs a reference to it (ex. if I want a user to
+         * be able to cancel the download), I'll need to have a getInstance method as well
+         */
+        setRetainInstance(true);
+        startDownload();
     }
 
     @Override
@@ -51,19 +58,20 @@ public class NetworkFragment extends Fragment {
 
     /**
      * Start non-blocking execution of DownloadTask.
-     * @return false if no base address was provided, true otherwise
      */
-    public boolean startDownload() {
-        String baseAddress = getArguments().getString(BASE_ADDRESS);
+    private void startDownload() {
+        Bundle args = getArguments();
+        if(args == null)
+            return;
 
-        if(baseAddress == null)
-            return false;
-        else if(mDownloadTask == null) {
+        String baseAddress = args.getString(BASE_ADDRESS);
+
+        if(baseAddress != null && mDownloadTask == null && getActivity() != null){
             String parentDirPath = getActivity().getFilesDir().getAbsolutePath();
             mDownloadTask = new DownloadTask(parentDirPath, mCallback);
             mDownloadTask.execute(baseAddress);
+
         }
-        return true;
     }
 
     /**
