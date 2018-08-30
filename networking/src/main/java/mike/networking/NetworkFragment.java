@@ -4,8 +4,6 @@ import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
 
 /**
  * Implementation of headless Fragment that runs an AsyncTask to fetch data from the network.
@@ -70,7 +68,6 @@ public class NetworkFragment extends Fragment {
             String parentDirPath = getActivity().getFilesDir().getAbsolutePath();
             mDownloadTask = new DownloadTask(parentDirPath, mCallback);
             mDownloadTask.execute(baseAddress);
-
         }
     }
 

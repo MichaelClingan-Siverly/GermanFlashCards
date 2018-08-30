@@ -110,7 +110,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback{
         mDownloading = false;
         if (mNetworkFragment != null) {
             mNetworkFragment.cancelDownload();
-            getSupportFragmentManager().beginTransaction().remove(mNetworkFragment).commitNow();
+            //shouldn't use commitNow here. Other transactions involving it may still be running
+            getSupportFragmentManager().beginTransaction().remove(mNetworkFragment).commit();
             mNetworkFragment = null;
         }
         String text;

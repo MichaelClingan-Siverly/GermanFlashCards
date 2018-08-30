@@ -81,7 +81,7 @@ class DownloadTask extends AsyncTask<String, String, DownloadTask.Result> {
                 //everything in here just throws the exceptions back to this to handle
                 URL url = new URL(urlString);
                 List<WordPair> newWords = downloadUrl(url);
-                if(isCancelled())
+                if(isCancelled() || newWords == null)
                     return null;
                 int wordsDownloaded = saveWords(newWords);
 
@@ -93,8 +93,8 @@ class DownloadTask extends AsyncTask<String, String, DownloadTask.Result> {
                 }
             }
             catch(Exception e) {
-                e.printStackTrace();
-                result = new Result(e);
+                //hides the exact error from the user. They don't care why it didn't work - only that it didn't work
+                result = null;
             }
         }
         return result;
