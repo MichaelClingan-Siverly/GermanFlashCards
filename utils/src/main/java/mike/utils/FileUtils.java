@@ -2,11 +2,16 @@ package mike.utils;
 
 import org.apache.commons.io.input.ReversedLinesFileReader;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 public class FileUtils {
@@ -24,8 +29,28 @@ public class FileUtils {
         }
     }
 
-    public static void readWordsFromFile(){
-        //TODO move the file reading from Logic to this. I'm positive I'll have this throw an exception as well
+    public static List<WordPair> readWordsFromFile(String fileDirectory){
+        ArrayList<WordPair> list = new ArrayList<>();
+        File cardFile = new File(fileDirectory, childPath);
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(cardFile), StandardCharsets.UTF_8));
+
+            String englishWord = null;
+            String word;
+            while ((word = reader.readLine()) != null) {
+                if (englishWord == null) {
+                    englishWord = word;
+                } else {
+                    list.add(new WordPair(word, englishWord));
+                    englishWord = null;
+                }
+            }
+            return list;
+        }
+        catch(IOException e){
+            //if there's a problem opening or reading the file, I guess it's finished reading all it can
+            return list;
+        }
     }
 
     public static String readLastWordFromFile(String fileDirectory) throws IOException {

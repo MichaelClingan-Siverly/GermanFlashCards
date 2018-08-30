@@ -1,5 +1,6 @@
 package clingan_siverly.germanflashcards;
 
+import android.arch.lifecycle.ViewModelProviders;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v4.app.Fragment;
@@ -10,16 +11,13 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
-import mike.logic.Logic;
-import mike.logic.LogicI;
 import mike.networking.DownloadCallback;
 import mike.networking.NetworkFragment;
 
 public class MainActivity extends AppCompatActivity implements DownloadCallback{
     //I need to keep a reference to the network fragment which owns the AsyncTask that actually does the work
     private NetworkFragment mNetworkFragment;
-    //tells if a downlaod is in progress, so I won't let user try again while still downloading
-    private boolean mDownloading = false;
+    private WordModel mWordModel;
 
     //TODO remove the download button from the layout
     //The two methods here are used as listeners for the two buttons for activity_main layout
@@ -39,9 +37,12 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
         if(savedInstanceState == null || !savedInstanceState.getBoolean("downloaded", false))
             getNewWords();
-        setContentView(R.layout.activity_main);
+        mWordModel = ViewModelProviders.of(this).get(WordModel.class);
+
     }
 
     @Override
@@ -59,10 +60,6 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback{
         args.putString(NetworkFragment.BASE_ADDRESS, address);
         mNetworkFragment.setArguments(args);
 
-        if (mNetworkFragment != null) {
-            // Execute the async download.
-            mDownloading = true;
-        }
         //I need this to be commitNow. Starting download before commit is finished will cause crashes
         getSupportFragmentManager().beginTransaction()
                 .add(mNetworkFragment, NetworkFragment.TAG).commitNow();
@@ -107,7 +104,6 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback{
      */
     @Override
     public void finishDownloading(String resultMessage, boolean success) {
-        mDownloading = false;
         if (mNetworkFragment != null) {
             mNetworkFragment.cancelDownload();
             //shouldn't use commitNow here. Other transactions involving it may still be running
