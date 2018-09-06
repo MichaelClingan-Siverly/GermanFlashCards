@@ -14,6 +14,13 @@ public class WordModel extends ViewModel {
     private int currentWordIndex = 0;
     private boolean nextwordIsEnglish = false;
 
+
+    public int getNumWordPairs(){
+        if(wordPairs == null)
+            return 0;
+        return wordPairs.size();
+    }
+
     /**
      * readies the next word pair in the set. If all words have been gone through, this should go back
      * to the first word pair
@@ -31,11 +38,11 @@ public class WordModel extends ViewModel {
      * Reads the saved cards and loads them so they can be displayed later
      *
      * @param mainDir the base directory for this app
-     * @return a boolean (true/false) value indicating whether there were any cards to be loaded or not
+     * @return true if cards were loaded, false if not
      */
     public boolean loadCards(String mainDir) {
         wordPairs = FileUtils.readWordsFromFile(mainDir);
-        return wordPairs == null || wordPairs.size() == 0;
+        return wordPairs != null && wordPairs.size() > 0;
     }
 
     /**

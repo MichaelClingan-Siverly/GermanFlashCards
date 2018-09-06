@@ -1,8 +1,10 @@
 package clingan_siverly.germanflashcards;
 
+import android.arch.lifecycle.ViewModelProviders;
 import android.support.v4.app.DialogFragment;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,38 +13,44 @@ import android.widget.Toast;
 
 import java.util.Random;
 
-import mike.logic.LogicI;
-import mike.logic.LogicStub;
-
 /**
  * Created by mike on 5/27/2018.
  * I'm being a bit lazy about handling lifecycle stuff.
  * We can get to that later if I really feel like it (I doubt it)
  */
 
-public final class CardFragment extends DialogFragment {
+public final class CardFragment extends DialogFragment implements MyFrags{
     View v = null;
-    LogicI logic;
+    public static String tag = "cardFrag";
     int bgColor = Color.TRANSPARENT;
+    WordModel mWordModel = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        logic = new LogicStub();
-        if(!logic.loadCards(getContext())){
-            getFragmentManager().beginTransaction().remove(this).commitAllowingStateLoss();
-            Toast.makeText(getContext(), "no words saved. try downloading.", Toast.LENGTH_LONG).show();
+
+        FragmentActivity activity = getActivity();
+        if(activity != null) {
+            WordModel model = ViewModelProviders.of(activity).get(WordModel.class);
+            if(model.getNumWordPairs() == 0){
+                Toast.makeText(activity, "No words saved. Try again later.",Toast.LENGTH_SHORT).show();
+                dismiss();
+            }
         }
+        else
+            dismiss();
     }
 
     private View.OnClickListener nextButtonListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            logic.nextWord();
-            Random rand = new Random();
-            boolean getEnglishWord = rand.nextBoolean();
-            Button b = v.findViewById(R.id.cardButton);
-            setWord(b, getEnglishWord); //Fix this
+            if(mWordModel != null) {
+                mWordModel.readyNextPair();
+                Random rand = new Random();
+                boolean getEnglishWord = rand.nextBoolean();
+                Button b = v.findViewById(R.id.cardButton);
+                setWord(b, getEnglishWord); //Fix this
+            }
         }
     };
 
@@ -71,11 +79,11 @@ public final class CardFragment extends DialogFragment {
         String word;
         if(english) {
             setColors(b, Color.WHITE, Color.BLACK);
-            word = logic.getEnglishWord();
+            word = mWordModel.getEnglishWord();
         }
         else {
             setColors(b, Color.BLACK, Color.WHITE);
-            word = logic.getGermanTranslation();
+            word = mWordModel.getGermanTranslation();
         }
         b.setText(word);
     }
@@ -84,5 +92,10 @@ public final class CardFragment extends DialogFragment {
         bgColor = bg;
         b.setBackgroundColor(bg);
         b.setTextColor(font);
+    }
+
+    @Override
+    public void showFrag(ShowsMyFrags caller){
+        caller.showFrag(this);
     }
 }

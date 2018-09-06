@@ -11,27 +11,56 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
+import java.util.List;
+
 import mike.networking.DownloadCallback;
 import mike.networking.NetworkFragment;
 
-public class MainActivity extends AppCompatActivity implements DownloadCallback{
+public class MainActivity extends AppCompatActivity implements DownloadCallback, MyFrags.ShowsMyFrags{
     //I need to keep a reference to the network fragment which owns the AsyncTask that actually does the work
     private NetworkFragment mNetworkFragment;
-    private WordModel mWordModel;
+    WordModel mWordModel = null;
 
-    //TODO remove the download button from the layout
     //The two methods here are used as listeners for the two buttons for activity_main layout
-    public void downloadCards(View v){
-//        startDownload();
+    public void goToFlashCards(View v){
+        startCardFrag();
     }
 
-    public void goToFlashCards(View v){
-        //This may look complicated, but all it does is display the cards
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+    public void showAllCards(View v){
+        startListFrag();
+    }
+
+
+    private void startListFrag(){
+        Toast.makeText(this, "This has not been implemented yet.", Toast.LENGTH_SHORT).show();
+        //TODO
+    }
+
+    private void startCardFrag(){
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        Fragment prev = getSupportFragmentManager().findFragmentByTag(CardFragment.tag);
+        if(prev != null){
+            fragmentTransaction.remove(prev).commitNow();
+        }
         CardFragment fragment = new CardFragment();
-        fragmentTransaction.add(R.id.mainLayout, fragment, "cardFrag");
-        fragmentTransaction.commit();
+        fragment.show(fragmentTransaction, CardFragment.tag);
+    }
+
+    private void refreshDisplayedFrags(){
+        List<Fragment> fragList = getSupportFragmentManager().getFragments();
+
+        for(Fragment frag : fragList){
+            if(frag != null && frag.isVisible()) {
+                MyFrags thisFrag = ((MyFrags) frag);
+                thisFrag.showFrag(this);
+            }
+        }
+    }
+
+
+    @Override
+    public void showFrag(CardFragment frag){
+        startCardFrag();
     }
 
     @Override
@@ -39,9 +68,14 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mWordModel = ViewModelProviders.of(this).get(WordModel.class);
+
+        //I just want to download words when the user starts the app
         if(savedInstanceState == null || !savedInstanceState.getBoolean("downloaded", false))
             getNewWords();
-        mWordModel = ViewModelProviders.of(this).get(WordModel.class);
+        else if(mWordModel.getNumWordPairs() > 0){
+            refreshDisplayedFrags();
+        }
 
     }
 
@@ -109,10 +143,16 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback{
             //shouldn't use commitNow here. Other transactions involving it may still be running
             getSupportFragmentManager().beginTransaction().remove(mNetworkFragment).commit();
             mNetworkFragment = null;
+
         }
         String text;
-        if(success)
+        if(success) {
             text = resultMessage + " new words added to the library.";
+            //if user decided to already view cards, I want to refresh that Fragment with the new cards
+            if(!text.equals("no")){
+                refreshDisplayedFrags();
+            }
+        }
         else
             text = resultMessage;
         Toast.makeText(this, text, Toast.LENGTH_LONG).show();

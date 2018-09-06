@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">GermanFlashcards</string>
-    <string name="download">Download Cards</string>
     <string name="next">Next Card</string>
+    <string name="allWords">View All Cards</string>
 </resources>
