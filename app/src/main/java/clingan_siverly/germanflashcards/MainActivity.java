@@ -37,13 +37,15 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
     }
 
     private void startCardFrag(){
-        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        Fragment prev = getSupportFragmentManager().findFragmentByTag(CardFragment.tag);
-        if(prev != null){
-            fragmentTransaction.remove(prev).commitNow();
+        if(mWordModel.loadCards(getFilesDir().getAbsolutePath())) {
+            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            Fragment prev = getSupportFragmentManager().findFragmentByTag(CardFragment.tag);
+            if (prev != null) {
+                fragmentTransaction.remove(prev).commitNow();
+            }
+            CardFragment fragment = new CardFragment();
+            fragmentTransaction.replace(android.R.id.content, fragment, CardFragment.tag).commit();
         }
-        CardFragment fragment = new CardFragment();
-        fragment.show(fragmentTransaction, CardFragment.tag);
     }
 
     private void refreshDisplayedFrags(){
@@ -61,6 +63,10 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
     @Override
     public void showFrag(CardFragment frag){
         startCardFrag();
+    }
+    @Override
+    public void dismissFrag(Fragment frag){
+        getSupportFragmentManager().beginTransaction().remove(frag).commit();
     }
 
     @Override

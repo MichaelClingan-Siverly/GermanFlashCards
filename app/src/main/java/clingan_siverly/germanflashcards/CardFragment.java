@@ -1,10 +1,9 @@
 package clingan_siverly.germanflashcards;
 
 import android.arch.lifecycle.ViewModelProviders;
-import android.support.v4.app.DialogFragment;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,7 +18,7 @@ import java.util.Random;
  * We can get to that later if I really feel like it (I doubt it)
  */
 
-public final class CardFragment extends DialogFragment implements MyFrags{
+public final class CardFragment extends Fragment implements MyFrags{
     View v = null;
     public static String tag = "cardFrag";
     int bgColor = Color.TRANSPARENT;
@@ -29,17 +28,20 @@ public final class CardFragment extends DialogFragment implements MyFrags{
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        FragmentActivity activity = getActivity();
+        MainActivity activity = (MainActivity) getActivity();
         if(activity != null) {
-            WordModel model = ViewModelProviders.of(activity).get(WordModel.class);
-            if(model.getNumWordPairs() == 0){
+            mWordModel = ViewModelProviders.of(activity).get(WordModel.class);
+            if(mWordModel.getNumWordPairs() == 0){
                 Toast.makeText(activity, "No words saved. Try again later.",Toast.LENGTH_SHORT).show();
-                dismiss();
+                activity.dismissFrag(this);
+            }
+            else{
+                mWordModel.shuffleWords();
             }
         }
-        else
-            dismiss();
     }
+
+
 
     private View.OnClickListener nextButtonListener = new View.OnClickListener() {
         @Override
@@ -57,7 +59,7 @@ public final class CardFragment extends DialogFragment implements MyFrags{
     private View.OnClickListener cardButtonListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            setWord((Button)v, bgColor == Color.BLACK);
+            setWord((Button)v , mWordModel.checkIfGermanDisplayed());
         }
     };
 
@@ -67,24 +69,27 @@ public final class CardFragment extends DialogFragment implements MyFrags{
         // Inflate the layout for this fragment
         v = inflater.inflate(R.layout.card_layout, container, false);
         //and then set my background and listeners
-        Button cardButton = v.findViewById(R.id.cardButton);
-        cardButton.setOnClickListener(cardButtonListener);
-        v.findViewById(R.id.nextButton).setOnClickListener(nextButtonListener);
+        Button button = v.findViewById(R.id.cardButton);
+        button.setOnClickListener(cardButtonListener);
+
+        button = v.findViewById(R.id.nextButton);
+        button.setOnClickListener(nextButtonListener);
         //and finally, set the text on the button.
-        nextButtonListener.onClick(cardButton);
+        nextButtonListener.onClick(button);
         return v;
     }
 
     private void setWord(Button b,boolean english){
         String word;
         if(english) {
-            setColors(b, Color.WHITE, Color.BLACK);
+            setColors(b, Color.GRAY, Color.BLACK);
             word = mWordModel.getEnglishWord();
         }
         else {
             setColors(b, Color.BLACK, Color.WHITE);
             word = mWordModel.getGermanTranslation();
         }
+        word = word.replaceAll(";", "\n");
         b.setText(word);
     }
 

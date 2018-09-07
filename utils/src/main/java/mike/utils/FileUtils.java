@@ -6,7 +6,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -23,7 +22,7 @@ public class FileUtils {
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(cardFile, true), StandardCharsets.UTF_8)){
             for (int i = pairs.size()-1; i >= 0; i--) {
                 WordPair pair = pairs.get(i);
-                writer.write(pair.getEnglishWord() + '\n' + pair.getGermanWord());
+                writer.write(pair.getEnglishWord() + '\n' + pair.getGermanWord() + '\n');
             }
             writer.flush();
         }

@@ -5,12 +5,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
 
-
     <Button
+        android:id="@+id/cardButton"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:textSize="30sp"
-        android:id="@+id/cardButton" />
+        app:layout_constraintBottom_toTopOf="@+id/nextButton" />
 
     <Button
         android:layout_width="match_parent"

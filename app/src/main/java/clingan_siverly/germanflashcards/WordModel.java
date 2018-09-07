@@ -2,6 +2,7 @@ package clingan_siverly.germanflashcards;
 
 import android.arch.lifecycle.ViewModel;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -11,14 +12,19 @@ import mike.utils.WordPair;
 //removed the Interface. To make the ViewModel, something would need to know this class anyway
 public class WordModel extends ViewModel {
     private List<WordPair> wordPairs = null;
-    private int currentWordIndex = 0;
-    private boolean nextwordIsEnglish = false;
+    private int currentWordIndex = -1;
+    private boolean nextWordIsEnglish = false;
 
 
     public int getNumWordPairs(){
         if(wordPairs == null)
             return 0;
         return wordPairs.size();
+    }
+
+    public void shuffleWords(){
+        if(wordPairs != null)
+            Collections.shuffle(wordPairs);
     }
 
     /**
@@ -48,10 +54,10 @@ public class WordModel extends ViewModel {
     /**
      * Look at the readied word pair (see nextWord) for the other part in the pair
      *
-     * @return the other word in the English-German word pair
+     * @return true if the displayed card is German (it will be English after a flip), false otherwise
      */
-    public String flipCard() {
-        return  getWord(nextwordIsEnglish);
+    public boolean checkIfGermanDisplayed() {
+        return nextWordIsEnglish;
     }
 
     /**
@@ -76,11 +82,11 @@ public class WordModel extends ViewModel {
         if(wordPairs == null || currentWordIndex >= wordPairs.size())
             return null;
         else {
-            nextwordIsEnglish = !english;
+            nextWordIsEnglish = !english;
             if (english)
                 return wordPairs.get(currentWordIndex).getEnglishWord();
             else
-                return wordPairs.get(currentWordIndex).getEnglishWord();
+                return wordPairs.get(currentWordIndex).getGermanWord();
         }
     }
 
