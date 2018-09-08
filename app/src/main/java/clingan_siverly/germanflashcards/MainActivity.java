@@ -5,7 +5,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -31,20 +30,30 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
     }
 
 
+    private void removeOldFrag(String tag){
+        Fragment prev = getSupportFragmentManager().findFragmentByTag(tag);
+        if (prev != null) {
+            getSupportFragmentManager().beginTransaction().remove(prev).commitNow();
+        }
+    }
+
     private void startListFrag(){
-        Toast.makeText(this, "This has not been implemented yet.", Toast.LENGTH_SHORT).show();
-        //TODO
+        if(mWordModel.loadCards(getFilesDir().getAbsolutePath())) {
+            removeOldFrag(CardListFragment.tag);
+            CardListFragment fragment = new CardListFragment();
+
+            getSupportFragmentManager().beginTransaction()
+                    .replace(android.R.id.content, fragment, CardListFragment.tag).commit();
+        }
     }
 
     private void startCardFrag(){
         if(mWordModel.loadCards(getFilesDir().getAbsolutePath())) {
-            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-            Fragment prev = getSupportFragmentManager().findFragmentByTag(CardFragment.tag);
-            if (prev != null) {
-                fragmentTransaction.remove(prev).commitNow();
-            }
+            removeOldFrag(CardFragment.tag);
+
             CardFragment fragment = new CardFragment();
-            fragmentTransaction.replace(android.R.id.content, fragment, CardFragment.tag).commit();
+            getSupportFragmentManager().beginTransaction()
+                    .replace(android.R.id.content, fragment, CardFragment.tag).commit();
         }
     }
 
@@ -63,6 +72,10 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
     @Override
     public void showFrag(CardFragment frag){
         startCardFrag();
+    }
+    @Override
+    public void showFrag(CardListFragment frag){
+        startListFrag();
     }
     @Override
     public void dismissFrag(Fragment frag){
@@ -107,11 +120,11 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
 
     @Override
     public void onBackPressed(){
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        Fragment frag = fragmentManager.findFragmentByTag("cardFrag");
+        List<Fragment> frags = getSupportFragmentManager().getFragments();
 
-        if(frag != null) {
-            fragmentManager.beginTransaction().remove(frag).commitNow();
+        if(frags != null && frags.size() > 0) {
+            Fragment frag = frags.get(frags.size() - 1);
+            getSupportFragmentManager().beginTransaction().remove(frag).commitNow();
         }
         else {
             super.onBackPressed();

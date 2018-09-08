@@ -7,6 +7,7 @@ interface MyFrags {
 
     interface ShowsMyFrags{
         void showFrag(CardFragment frag);
+        void showFrag(CardListFragment frag);
         void dismissFrag(Fragment frag);
     }
 }

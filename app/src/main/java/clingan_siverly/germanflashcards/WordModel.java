@@ -5,6 +5,7 @@ import android.arch.lifecycle.ViewModel;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 import mike.utils.FileUtils;
 import mike.utils.WordPair;
@@ -22,9 +23,19 @@ public class WordModel extends ViewModel {
         return wordPairs.size();
     }
 
-    public void shuffleWords(){
-        if(wordPairs != null)
+    //shuffles words, while retaining the proper current word index
+    //it would be bad if shuffling and flipping a card gave an incorrect translation
+    private void shuffleWords(){
+        if(wordPairs != null && wordPairs.size() > 1) {
+            WordPair currentPair = null;
+            if(currentWordIndex >= 0)
+                currentPair = wordPairs.get(currentWordIndex);
+
             Collections.shuffle(wordPairs);
+
+            if(currentWordIndex >= 0)
+                currentWordIndex = wordPairs.indexOf(currentPair);
+        }
     }
 
     /**
@@ -37,6 +48,8 @@ public class WordModel extends ViewModel {
                 currentWordIndex = 0;
             else
                 currentWordIndex++;
+
+            nextWordIsEnglish = new Random().nextBoolean();
         }
     }
 
@@ -48,6 +61,7 @@ public class WordModel extends ViewModel {
      */
     public boolean loadCards(String mainDir) {
         wordPairs = FileUtils.readWordsFromFile(mainDir);
+        shuffleWords();
         return wordPairs != null && wordPairs.size() > 0;
     }
 
