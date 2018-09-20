@@ -2,7 +2,7 @@ package clingan_siverly.germanflashcards;
 
 import android.support.v4.app.Fragment;
 
-interface MyFrags {
+public interface MyFrags {
     void showFrag(ShowsMyFrags caller);
 
     interface ShowsMyFrags{

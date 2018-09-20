@@ -4,7 +4,6 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -47,14 +46,29 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
         }
     }
 
-    private void startCardFrag(){
+    private void startCardFrag(Bundle args){
         if(mWordModel.loadCards(getFilesDir().getAbsolutePath())) {
             removeOldFrag(CardFragment.tag);
 
             CardFragment fragment = new CardFragment();
+            fragment.setArguments(args);
+
             getSupportFragmentManager().beginTransaction()
                     .replace(android.R.id.content, fragment, CardFragment.tag).commit();
         }
+    }
+
+    private void startCardFrag(){
+        Bundle args = new Bundle();
+        args.putBoolean(CardFragment.shuffle, true);
+        startCardFrag(args);
+    }
+
+    public void startCardFrag(int position, boolean english){
+        Bundle args = new Bundle();
+        args.putInt(CardFragment.showWordIndex, position);
+        args.putBoolean(CardFragment.displayEnglish, english);
+        startCardFrag(args);
     }
 
     private void refreshDisplayedFrags(){
@@ -166,11 +180,17 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
         }
         String text;
         if(success) {
-            text = resultMessage + " new words added to the library.";
+            String modifiedResultMessage;
+
             //if user decided to already view cards, I want to refresh that Fragment with the new cards
-            if(!text.equals("no")){
+            if(!resultMessage.equals("0")){
+                modifiedResultMessage = resultMessage;
+                mWordModel.indicateNewWordsDownloaded();
                 refreshDisplayedFrags();
             }
+            else
+                modifiedResultMessage = "No";
+            text = modifiedResultMessage + " new words added to the library.";
         }
         else
             text = resultMessage;

@@ -18,7 +18,11 @@ import android.widget.Toast;
 
 public final class CardFragment extends Fragment implements MyFrags{
     public final static String tag = "cardFrag";
+    public final static String shuffle = "shuffle";
+    public final static String showWordIndex = "show";
+    public final static String displayEnglish = "eng";
     private WordModel mWordModel = null;
+    private View mLayout;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -34,19 +38,14 @@ public final class CardFragment extends Fragment implements MyFrags{
         }
     }
 
-
-
     private View.OnClickListener nextButtonListener = new View.OnClickListener() {
         @Override
-        public void onClick(View view) {
+        public void onClick(View v) {
             if(mWordModel != null) {
                 mWordModel.readyNextPair();
                 //this may be called before onCreateView is set, so this works while getView() does not
-                View v = view.getRootView();
-                if(v != null) {
-                    Button b = v.findViewById(R.id.cardButton);
-                    setWord(b);
-                }
+                Button b = mLayout.findViewById(R.id.cardButton);
+                setWord(b);
             }
         }
     };
@@ -62,28 +61,47 @@ public final class CardFragment extends Fragment implements MyFrags{
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View v = inflater.inflate(R.layout.card_layout, container, false);
+        mLayout = inflater.inflate(R.layout.card_layout, container, false);
         //and then set my background and listeners
-        Button button = v.findViewById(R.id.cardButton);
+        Button button = mLayout.findViewById(R.id.cardButton);
         button.setOnClickListener(cardButtonListener);
 
-        button = v.findViewById(R.id.nextButton);
+        button = mLayout.findViewById(R.id.nextButton);
         button.setOnClickListener(nextButtonListener);
+
         //and finally, set the text on the button.
-        nextButtonListener.onClick(button);
-        return v;
+        if(initWord())
+            nextButtonListener.onClick(button);
+
+        return mLayout;
+    }
+
+
+    //return true if pairs were shuffled, false otherwise
+    private boolean initWord(){
+        if(getArguments() != null) {
+            if (getArguments().getBoolean(shuffle, false)) {
+                mWordModel.shuffleWords();
+                return true;
+            }
+            if (getArguments().getInt(showWordIndex, -1) >= 0) {
+                setWord(new Button(getContext()));
+            }
+        }
+        return false;
     }
 
     private void setWord(Button b){
         String word;
+        //if a German word is currently displayed, I want to display the English translation (and vice versa)
         if(mWordModel.checkIfGermanDisplayed()) {
+            setColors(b, Color.GRAY, Color.BLACK);
+            word = mWordModel.getEnglishWord();
+        }
+        else {
             setColors(b, Color.BLACK, Color.WHITE);
             word = mWordModel.getGermanTranslation();
 
-        }
-        else {
-            setColors(b, Color.GRAY, Color.BLACK);
-            word = mWordModel.getEnglishWord();
         }
         word = word.replaceAll(";", "\n");
         b.setText(word);

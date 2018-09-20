@@ -15,7 +15,11 @@ public class WordModel extends ViewModel {
     private List<WordPair> wordPairs = null;
     private int currentWordIndex = -1;
     private boolean nextWordIsEnglish = false;
+    private boolean mustLoadWords = true;
 
+    public void indicateNewWordsDownloaded(){
+        mustLoadWords = true;
+    }
 
     public int getNumWordPairs(){
         if(wordPairs == null)
@@ -25,7 +29,7 @@ public class WordModel extends ViewModel {
 
     //shuffles words, while retaining the proper current word index
     //it would be bad if shuffling and flipping a card gave an incorrect translation
-    private void shuffleWords(){
+    public void shuffleWords(){
         if(wordPairs != null && wordPairs.size() > 1) {
             WordPair currentPair = null;
             if(currentWordIndex >= 0)
@@ -53,6 +57,12 @@ public class WordModel extends ViewModel {
         }
     }
 
+    public void readyPairAtPosition(int index) {
+        if(wordPairs != null && wordPairs.size() > index){
+            currentWordIndex = index;
+        }
+    }
+
     /**
      * Reads the saved cards and loads them so they can be displayed later
      *
@@ -60,9 +70,11 @@ public class WordModel extends ViewModel {
      * @return true if cards were loaded, false if not
      */
     public boolean loadCards(String mainDir) {
-        wordPairs = FileUtils.readWordsFromFile(mainDir);
-        shuffleWords();
-        return wordPairs != null && wordPairs.size() > 0;
+        if(mustLoadWords) {
+            wordPairs = FileUtils.readWordsFromFile(mainDir);
+            mustLoadWords = wordPairs == null || wordPairs.size() == 0;
+        }
+        return !mustLoadWords;
     }
 
     /**
@@ -102,6 +114,10 @@ public class WordModel extends ViewModel {
             else
                 return wordPairs.get(currentWordIndex).getGermanWord();
         }
+    }
+
+    public List<WordPair> getWordPairs() {
+        return wordPairs;
     }
 
     /**

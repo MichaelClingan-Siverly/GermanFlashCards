@@ -117,10 +117,10 @@ class DownloadTask extends AsyncTask<String, String, DownloadTask.Result> {
             }
             else if (result.mResultValue >= 0) {
                 String value;
-                if(result.mResultValue > 0)
+                if(result.mResultValue > 0)//TODO
                     value = String.valueOf(result.mResultValue);
-                else //I just thought "No" would read better than "0"
-                    value = "No";
+                else
+                    value = "0";
                 mCallback.finishDownloading(value, true);
             }
         }
