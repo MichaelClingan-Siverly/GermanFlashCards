@@ -84,8 +84,18 @@ public final class CardFragment extends Fragment implements MyFrags{
                 mWordModel.shuffleWords();
                 return true;
             }
-            if (getArguments().getInt(showWordIndex, -1) >= 0) {
-                setWord(new Button(getContext()));
+            int index =getArguments().getInt(showWordIndex, -1);
+            if (index >= 0) {
+                mWordModel.readyPairAtPosition(index);
+                //model gets wrong word here, because the setWord call (used to set proper card colors)
+                //switches the words (thus setting it to the proper one)
+                if(getArguments().getBoolean(displayEnglish, false))
+                    mWordModel.getGermanTranslation();
+                else
+                    mWordModel.getEnglishWord();
+
+                Button b = mLayout.findViewById(R.id.cardButton);
+                setWord(b);
             }
         }
         return false;
