@@ -51,12 +51,10 @@ class DownloadTask extends AsyncTask<String, String, DownloadTask.Result> {
     protected void onPreExecute() {
         if (mCallback != null) {
             NetworkInfo networkInfo = mCallback.getActiveNetworkInfo();
-            if (networkInfo == null || !networkInfo.isConnected() ||
-                    (networkInfo.getType() != ConnectivityManager.TYPE_WIFI
-                            && networkInfo.getType() != ConnectivityManager.TYPE_MOBILE
-                            && networkInfo.getType() != ConnectivityManager.TYPE_ETHERNET)) {
+            //I don't really care how its connected - only that it is connected.
+            if (networkInfo == null || !networkInfo.isConnected()) {
                 // If no connectivity, cancel task and update Callback with null data.
-                mCallback.finishDownloading("No WiFi or network connection", false);
+                mCallback.finishDownloading("Can't connect to database", false);
                 cancel(true);
             }
         }

@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "475071941338",
+    "firebase_url": "https://flashcard-app-cef01.firebaseio.com",
+    "project_id": "flashcard-app-cef01",
+    "storage_bucket": "flashcard-app-cef01.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:475071941338:android:10f91d349245e083",
+        "android_client_info": {
+          "package_name": "clingan_siverly.germanflashcards"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "475071941338-3mn03d3heaf0vptqoeoe1fpguvqdguo1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "clingan_siverly.germanflashcards",
+            "certificate_hash": "1f2545beac37a30c1dc477efbf896a6bb46b687e"
+          }
+        },
+        {
+          "client_id": "475071941338-641a2dhrl99n680gruo6rvoqhajqpq5t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWb7x-sum7nIPSFsXnySGNd_DBMaXlfRE"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "475071941338-641a2dhrl99n680gruo6rvoqhajqpq5t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
