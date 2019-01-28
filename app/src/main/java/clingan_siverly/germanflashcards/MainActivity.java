@@ -3,11 +3,22 @@ package clingan_siverly.germanflashcards;
 import android.arch.lifecycle.ViewModelProviders;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.List;
 
@@ -17,6 +28,7 @@ import mike.networking.NetworkFragment;
 public class MainActivity extends AppCompatActivity implements DownloadCallback, MyFrags.ShowsMyFrags{
     //I need to keep a reference to the network fragment which owns the AsyncTask that actually does the work
     private NetworkFragment mNetworkFragment;
+    private FirebaseAuth mAuth;
     WordModel mWordModel = null;
 
     //The two methods here are used as listeners for the two buttons for activity_main layout
@@ -101,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mAuth = FirebaseAuth.getInstance();
         mWordModel = ViewModelProviders.of(this).get(WordModel.class);
 
         //I just want to download words when the user starts the app
@@ -109,7 +122,30 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
         else if(mWordModel.getNumWordPairs() > 0){
             refreshDisplayedFrags();
         }
+    }
 
+    @Override
+    public void onStart(){
+        super.onStart();
+        // This is all rather basic. For a more in-depth use, I'll have to add sign-in screens, etc.
+        // But since I'm only authenticating for practice (no actual reason), I'll live with this for now
+        mAuth.signInAnonymously()
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        String toastText;
+                        if(task.isSuccessful()){
+                            toastText = "Signed in anonymously.";
+                        }
+                        else{
+                            Log.w("meh", "signInAnonymously:failure", task.getException());
+
+                            toastText = "Authentication failed.";
+                        }
+                        Toast.makeText(MainActivity.this, toastText,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     @Override
@@ -128,8 +164,23 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
         mNetworkFragment.setArguments(args);
 
         //I need this to be commitNow. Starting download before commit is finished will cause crashes
-        getSupportFragmentManager().beginTransaction()
-                .add(mNetworkFragment, NetworkFragment.TAG).commitNow();
+//        getSupportFragmentManager().beginTransaction()
+//                .add(mNetworkFragment, NetworkFragment.TAG).commitNow();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("germanEnglishWordPairs")
+                .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()) {
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        Log.d("meh", document.getId() + " => " + document.getData());
+                    }
+                } else {
+                    Log.w("meh", "Error getting documents.", task.getException());
+                }
+
+            }
+        });
     }
 
     @Override
