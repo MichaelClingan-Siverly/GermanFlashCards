@@ -1,8 +1,6 @@
 package clingan_siverly.germanflashcards;
 
 import android.arch.lifecycle.ViewModelProviders;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -15,19 +13,14 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import mike.networking.DownloadCallback;
-import mike.networking.NetworkFragment;
-
-public class MainActivity extends AppCompatActivity implements DownloadCallback, MyFrags.ShowsMyFrags{
-    //I need to keep a reference to the network fragment which owns the AsyncTask that actually does the work
-    private NetworkFragment mNetworkFragment;
+public class MainActivity extends AppCompatActivity implements MyFrags.ShowsMyFrags{
     private FirebaseAuth mAuth;
     WordModel mWordModel = null;
 
@@ -49,7 +42,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
     }
 
     private void startListFrag(){
-        if(mWordModel.loadCards(getFilesDir().getAbsolutePath())) {
+        if(mWordModel.getNumWordPairs() > 0) {
             removeOldFrag(CardListFragment.tag);
             CardListFragment fragment = new CardListFragment();
 
@@ -59,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
     }
 
     private void startCardFrag(Bundle args){
-        if(mWordModel.loadCards(getFilesDir().getAbsolutePath())) {
+        if(mWordModel.getNumWordPairs() > 0) {
             removeOldFrag(CardFragment.tag);
 
             CardFragment fragment = new CardFragment();
@@ -94,7 +87,6 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
         }
     }
 
-
     @Override
     public void showFrag(CardFragment frag){
         startCardFrag();
@@ -114,14 +106,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
         setContentView(R.layout.activity_main);
 
         mAuth = FirebaseAuth.getInstance();
+        //this creates/retrieves my model and retains it as long as "this" Activity is alive
         mWordModel = ViewModelProviders.of(this).get(WordModel.class);
-
-        //I just want to download words when the user starts the app
-        if(savedInstanceState == null || !savedInstanceState.getBoolean("downloaded", false))
-            getNewWords();
-        else if(mWordModel.getNumWordPairs() > 0){
-            refreshDisplayedFrags();
-        }
     }
 
     @Override
@@ -146,6 +132,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
+        getNewWords();
     }
 
     @Override
@@ -156,29 +143,26 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
     }
 
     private void getNewWords(){
-        final String address = "http://germanwords.000webhostapp.com/wordPairs.php";
-
-        mNetworkFragment = new NetworkFragment();
-        Bundle args = new Bundle();
-        args.putString(NetworkFragment.BASE_ADDRESS, address);
-        mNetworkFragment.setArguments(args);
-
-        //I need this to be commitNow. Starting download before commit is finished will cause crashes
-//        getSupportFragmentManager().beginTransaction()
-//                .add(mNetworkFragment, NetworkFragment.TAG).commitNow();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("germanEnglishWordPairs")
                 .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if (task.isSuccessful()) {
-                    for (QueryDocumentSnapshot document : task.getResult()) {
-                        Log.d("meh", document.getId() + " => " + document.getData());
-                    }
-                } else {
-                    Log.w("meh", "Error getting documents.", task.getException());
-                }
+                if (task.isSuccessful() && task.getResult() != null) {
+                    ArrayList<WordPair> pairs = new ArrayList<>(task.getResult().size());
 
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        pairs.add(new WordPair(document.getString("german"),
+                                document.getString("english")));
+                    }
+                    mWordModel.loadCards(pairs);
+                    // This isn't necessary, but it seems courteous to update a
+                    // user's view in case the list of cards has changed
+                    refreshDisplayedFrags();
+                }
+                else {
+                    Log.w("meh", "Error loading word pairs.", task.getException());
+                }
             }
         });
     }
@@ -194,57 +178,5 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback,
         else {
             super.onBackPressed();
         }
-    }
-
-    /**
-     * Get the device's active network status in the form of a NetworkInfo object.
-     */
-    @Override
-    public NetworkInfo getActiveNetworkInfo() {
-        ConnectivityManager connectivityManager =
-                (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-        if(connectivityManager != null)
-            return connectivityManager.getActiveNetworkInfo();
-        else
-            return null;
-    }
-
-    @Override
-    public void postProgress(String message){
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
-
-    /**
-     * Indicates that the download operation has finished. This method is called even if the
-     * download hasn't completed successfully.
-     *
-     * @param success true if the result represents the actual string, false if its an error message
-     */
-    @Override
-    public void finishDownloading(String resultMessage, boolean success) {
-        if (mNetworkFragment != null) {
-            mNetworkFragment.cancelDownload();
-            //shouldn't use commitNow here. Other transactions involving it may still be running
-            getSupportFragmentManager().beginTransaction().remove(mNetworkFragment).commit();
-            mNetworkFragment = null;
-
-        }
-        String text;
-        if(success) {
-            String modifiedResultMessage;
-
-            //if user decided to already view cards, I want to refresh that Fragment with the new cards
-            if(!resultMessage.equals("0")){
-                modifiedResultMessage = resultMessage;
-                mWordModel.indicateNewWordsDownloaded();
-                refreshDisplayedFrags();
-            }
-            else
-                modifiedResultMessage = "No";
-            text = modifiedResultMessage + " new words added to the library.";
-        }
-        else
-            text = resultMessage;
-        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
     }
 }

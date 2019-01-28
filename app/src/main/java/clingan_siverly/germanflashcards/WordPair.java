@@ -1,4 +1,4 @@
-package mike.utils;
+package clingan_siverly.germanflashcards;
 
 /**
  * represents a german word and it's english translation

@@ -2,7 +2,6 @@ package clingan_siverly.germanflashcards;
 
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,8 +9,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.List;
-
-import mike.utils.WordPair;
 
 public class CardListAdapter extends android.support.v7.widget.RecyclerView.Adapter<CardListAdapter.ViewHolder> {
     private List<WordPair> pairs;

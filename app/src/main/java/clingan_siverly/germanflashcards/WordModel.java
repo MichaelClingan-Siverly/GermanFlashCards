@@ -7,19 +7,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import mike.utils.FileUtils;
-import mike.utils.WordPair;
-
 //removed the Interface. To make the ViewModel, something would need to know this class anyway
 public class WordModel extends ViewModel {
     private List<WordPair> wordPairs = null;
     private int currentWordIndex = -1;
     private boolean nextWordIsEnglish = false;
-    private boolean mustLoadWords = true;
-
-    public void indicateNewWordsDownloaded(){
-        mustLoadWords = true;
-    }
 
     public int getNumWordPairs(){
         if(wordPairs == null)
@@ -66,15 +58,10 @@ public class WordModel extends ViewModel {
     /**
      * Reads the saved cards and loads them so they can be displayed later
      *
-     * @param mainDir the base directory for this app
-     * @return true if cards were loaded, false if not
+     * @param pairs the word pairs which this model should represent
      */
-    public boolean loadCards(String mainDir) {
-        if(mustLoadWords) {
-            wordPairs = FileUtils.readWordsFromFile(mainDir);
-            mustLoadWords = wordPairs == null || wordPairs.size() == 0;
-        }
-        return !mustLoadWords;
+    public void loadCards(List<WordPair> pairs) {
+        wordPairs = pairs;
     }
 
     /**
